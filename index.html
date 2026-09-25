@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greedy String Art (Filography) Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>Filography / String Art Generator</h1>
+    <p>Upload a clear portrait or high-contrast image to generate string patterns.</p>
+
+    <div class="container">
+        <!-- Controls Column -->
+        <div class="controls">
+            <div class="control-group">
+                <label for="imageLoader">1. Choose Image</label>
+                <input type="file" id="imageLoader" accept="image/*">
+            </div>
+
+            <div class="control-group">
+                <label for="pinCount">Number of Pins: <span id="pinCountVal">240</span></label>
+                <input type="range" id="pinCount" min="100" max="360" value="240" step="10">
+            </div>
+
+            <div class="control-group">
+                <label for="lineCount">Max String Lines: <span id="lineCountVal">3000</span></label>
+                <input type="range" id="lineCount" min="500" max="5000" value="3000" step="100">
+            </div>
+
+            <div class="control-group">
+                <label for="lineWeight">Line Opacity / Weight: <span id="lineWeightVal">25</span></label>
+                <input type="range" id="lineWeight" min="5" max="50" value="25">
+            </div>
+
+            <button id="startButton">Generate String Art</button>
+            
+            <div class="control-group" style="margin-top: 15px;">
+                <label for="outputSeq">Generated Pin Sequence:</label>
+                <textarea id="outputSeq" readonly placeholder="Pin sequence will appear here step-by-step..."></textarea>
+            </div>
+        </div>
+
+        <!-- Canvas Viewer Column -->
+        <div class="viewer">
+            <canvas id="canvas" width="450" height="450"></canvas>
+            <div id="status">Ready</div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
