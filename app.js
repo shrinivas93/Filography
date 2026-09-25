@@ -5,7 +5,7 @@ const startButton = document.getElementById('startButton');
 const statusDiv = document.getElementById('status');
 const outputSeq = document.getElementById('outputSeq');
 
-// Dynamic Label Updates
+// Dynamic Label Slider Updates
 const setupSlider = (id, valId) => {
     const el = document.getElementById(id);
     const valEl = document.getElementById(valId);
@@ -18,23 +18,28 @@ setupSlider('lineWeight', 'lineWeightVal');
 let sourceImage = new Image();
 let isProcessing = false;
 
-// Load Default Procedural Face Placeholder
+// Load Default Procedural Face Placeholder immediately
 window.addEventListener('DOMContentLoaded', () => {
     createPlaceholderImage();
 });
 
+// Fixed Image Loader incorporating dataURI & crossOrigin configurations
 imageLoader.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = function(event){
         sourceImage = new Image();
+        sourceImage.crossOrigin = "anonymous"; // Safe context flag preventing canvas taint errors
         sourceImage.onload = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
-            statusDiv.textContent = "Image loaded successfully!";
+            statusDiv.textContent = "Image loaded successfully! Ready to generate.";
         }
         sourceImage.src = event.target.result;
     }
-    reader.readAsDataURL(e.target.files);
+    reader.readAsDataURL(file);
 });
 
 startButton.addEventListener('click', () => {
@@ -75,18 +80,21 @@ async function runStringArtAlgorithm() {
     const cx = width / 2;
     const cy = height / 2;
 
+    // Refresh rendering viewport bounds
     ctx.clearRect(0, 0, width, height);
     ctx.drawImage(sourceImage, 0, 0, width, height);
     
     let imgData = ctx.getImageData(0, 0, width, height);
     let data = imgData.data;
     
+    // Convert 4-channel image stream into 1D flat inverted grayscale array structure
     let workingMap = new Float32Array(width * height);
     for (let i = 0; i < data.length; i += 4) {
         let gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
         workingMap[i / 4] = 255 - gray; 
     }
 
+    // Map circular anchor boundary placements
     let pinCoords = [];
     for (let i = 0; i < numPins; i++) {
         let angle = i * (2 * Math.PI / numPins);
@@ -96,6 +104,7 @@ async function runStringArtAlgorithm() {
         });
     }
 
+    // Reset view canvas to build the thread structure line-by-line
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
     ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
@@ -106,10 +115,10 @@ async function runStringArtAlgorithm() {
     outputSeq.value = currentPin.toString();
 
     let lineIndex = 0;
-    const minPinDistanceBuffer = 15;
+    const minPinDistanceBuffer = 15; // Eliminates overlapping border track clustering
 
     function processBatch() {
-        let batchSize = 40; 
+        let batchSize = 40; // Updates UI frame states every 40 generations
         
         for (let b = 0; b < batchSize; b++) {
             if (lineIndex >= maxLines) {
@@ -146,11 +155,13 @@ async function runStringArtAlgorithm() {
                 return;
             }
 
+            // Draw current string line
             ctx.beginPath();
             ctx.moveTo(pinCoords[currentPin].x, pinCoords[currentPin].y);
             ctx.lineTo(pinCoords[bestPin].x, pinCoords[bestPin].y);
             ctx.stroke();
 
+            // Error subtraction: lighten matrix entries under line trajectory path
             for (let i = 0; i < bestLinePixels.length; i++) {
                 workingMap[bestLinePixels[i]] -= lineWeight;
                 if (workingMap[bestLinePixels[i]] < 0) workingMap[bestLinePixels[i]] = 0;
@@ -178,6 +189,7 @@ async function runStringArtAlgorithm() {
     requestAnimationFrame(processBatch);
 }
 
+// Flat 1D Array implementation of Bresenham's Vector Line Path Tracer
 function getLinePixelIndices(p0, p1, width) {
     let indices = [];
     let x0 = p0.x;
