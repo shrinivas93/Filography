@@ -23,23 +23,41 @@ window.addEventListener('DOMContentLoaded', () => {
     createPlaceholderImage();
 });
 
-// Fixed Image Loader incorporating dataURI & crossOrigin configurations
-imageLoader.addEventListener('change', (e) => {
-    const file = e.target.files[0];
+function loadImageFile(file) {
     if (!file) return;
 
+    if (!file.type.startsWith('image/')) {
+        statusDiv.textContent = 'Please select a valid image file.';
+        return;
+    }
+
     const reader = new FileReader();
-    reader.onload = function(event){
+    reader.onload = function(event) {
         sourceImage = new Image();
-        sourceImage.crossOrigin = "anonymous"; // Safe context flag preventing canvas taint errors
+        sourceImage.crossOrigin = 'anonymous';
         sourceImage.onload = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
-            statusDiv.textContent = "Image loaded successfully! Ready to generate.";
-        }
+            statusDiv.textContent = 'Image loaded successfully! Ready to generate.';
+        };
+        sourceImage.onerror = () => {
+            statusDiv.textContent = 'Unable to load the selected image. Please try another file.';
+        };
         sourceImage.src = event.target.result;
-    }
+    };
+    reader.onerror = () => {
+        statusDiv.textContent = 'There was an error reading the selected image.';
+    };
     reader.readAsDataURL(file);
+}
+
+// Fixed Image Loader incorporating dataURI & crossOrigin configurations
+imageLoader.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    loadImageFile(file);
+
+    // Reset the input so the same file can be selected again later.
+    e.target.value = '';
 });
 
 startButton.addEventListener('click', () => {
@@ -48,15 +66,15 @@ startButton.addEventListener('click', () => {
 });
 
 function createPlaceholderImage() {
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    ctx.fillStyle = "#333333";
+    ctx.fillStyle = '#333333';
     ctx.beginPath();
     ctx.arc(225, 225, 120, 0, Math.PI * 2);
     ctx.fill();
     
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(170, 200, 30, 0, Math.PI * 2);
     ctx.arc(280, 200, 30, 0, Math.PI * 2);
@@ -105,9 +123,9 @@ async function runStringArtAlgorithm() {
     }
 
     // Reset view canvas to build the thread structure line-by-line
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.lineWidth = 0.6;
 
     let currentPin = 0;
